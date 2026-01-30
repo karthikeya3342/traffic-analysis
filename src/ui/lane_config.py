@@ -182,19 +182,30 @@ def render_lane_config(config, selected_video):
                 refresh_key = st.session_state['lane_canvas_key']
                 unique_key = f"canvas_{selected_video}_{len(initial_drawing['objects'])}_{refresh_key}_{mode}"
                 
-                canvas_result = st_canvas(
-                    fill_color="rgba(0, 255, 0, 0.3)",
-                    stroke_width=2,
-                    stroke_color="green",
-                    background_image=frame_pil,
-                    update_streamlit=True,
-                    height=canvas_height,
-                    width=canvas_width,
-                    drawing_mode="point",
-                    point_display_radius=5,
-                    initial_drawing=initial_drawing,
-                    key=unique_key,
-                )
+                # DEBUG / GUARD: Ensure valid image for Cloud
+                safe_bg = frame_pil
+                # Ensure it is a PIL Image
+                if not isinstance(safe_bg, Image.Image):
+                    st.warning(f"Background image invalid type: {type(safe_bg)}. Using placeholder.")
+                    safe_bg = Image.new("RGB", (canvas_width, canvas_height), (0, 0, 0))
+                
+                try:
+                    canvas_result = st_canvas(
+                        fill_color="rgba(0, 255, 0, 0.3)",
+                        stroke_width=2,
+                        stroke_color="green",
+                        background_image=safe_bg,
+                        update_streamlit=True,
+                        height=canvas_height,
+                        width=canvas_width,
+                        drawing_mode="point",
+                        point_display_radius=5,
+                        initial_drawing=initial_drawing,
+                        key=unique_key,
+                    )
+                except Exception as e:
+                     st.error(f"Canvas Error: {e}")
+                     return
                 
                 if canvas_result.json_data is not None:
                     objects = canvas_result.json_data["objects"]
