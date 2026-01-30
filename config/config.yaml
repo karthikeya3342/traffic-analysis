@@ -1,0 +1,26 @@
+analytics:
+  lanes: []
+  queue_threshold_speed: 2
+  speed_limit_pixels: 25
+  stop_line_coords:
+  - - 347
+    - 612
+  - - 1268
+    - 628
+detection:
+  classes:
+  - 2
+  - 3
+  - 5
+  - 7
+  confidence_threshold: 0.3
+  model: yolo11n.pt
+tracking:
+  max_disappeared: 50
+  max_distance: 150
+video:
+  fps: 30
+  output: output/processed_video.mp4
+  resize_height: 720
+  resize_width: 1280
+  source: data/sample_video.mp4

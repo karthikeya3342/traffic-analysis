@@ -1,0 +1,20 @@
+2026-01-30 23:16:13,367 - INFO - Overriding video source: data\1234.mp4.mp4
+2026-01-30 23:16:13,384 - INFO - Video loaded: data\1234.mp4.mp4 | FPS: 30.0 | Resolution: 1280x720
+2026-01-30 23:16:13,384 - INFO - Loading YOLO model: yolo11n.pt
+
+Failed to load OpenH264 library: openh264-1.8.0-win64.dll
+	Please check environment and/or download library: https://github.com/cisco/openh264/releases
+
+[libopenh264 @ 00000154666b3fc0] Incorrect library version loaded
+[ERROR:0@0.141] global cap_ffmpeg_impl.hpp:3264 open Could not open codec libopenh264, error: Unspecified error (-22)
+[ERROR:0@0.141] global cap_ffmpeg_impl.hpp:3281 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2026-01-30 23:16:14,938 - INFO - Starting processing...
+2026-01-30 23:16:16,114 - INFO - Frame 0 | Total: 2 | 
+2026-01-30 23:16:18,762 - INFO - Frame 10 | Total: 2 | 
+2026-01-30 23:16:21,248 - INFO - Frame 20 | Total: 2 | 
+2026-01-30 23:16:23,822 - INFO - Frame 30 | Total: 3 | 
+2026-01-30 23:16:26,383 - INFO - Frame 40 | Total: 3 | 
+2026-01-30 23:16:26,997 - INFO - Stop signal received. Finishing processing...
+2026-01-30 23:16:27,071 - INFO - Processing complete. Video saved.
+2026-01-30 23:16:28,370 - INFO - Stats saved to data/stats.csv
+2026-01-30 23:16:28,374 - INFO - Final summary saved to data/final_summary.json

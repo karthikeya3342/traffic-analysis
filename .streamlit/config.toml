@@ -1,0 +1,8 @@
+[server]
+# Prevent Streamlit from checking for file changes in these folders
+# This prevents the app from reloading loop when analysis writes output
+folderWatchBlacklist = ['data', 'output']
+
+[theme]
+base="dark"
+primaryColor="#00ff00" # Green to match our style

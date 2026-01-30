@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Environment
+.env
+.venv
+env/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Traffic Analysis Runtime Data
+data/*.jpg
+data/*.json
+data/*.log
+*.log
+
+# Large Types
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# OS
+Thumbs.db
+Desktop.ini
