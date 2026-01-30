@@ -189,6 +189,11 @@ def render_lane_config(config, selected_video):
                     st.warning(f"Background image invalid type: {type(safe_bg)}. Using placeholder.")
                     safe_bg = Image.new("RGB", (canvas_width, canvas_height), (0, 0, 0))
                 
+                # --- VISIBLE DEBUG FOR CLOUD DIAGNOSIS ---
+                st.write(f"DEBUG: Canvas Bg Type: {type(safe_bg)}")
+                st.write(f"DEBUG: Canvas Bg Value: {safe_bg}")
+                # ----------------------------------------
+                
                 try:
                     canvas_result = st_canvas(
                         fill_color="rgba(0, 255, 0, 0.3)",
