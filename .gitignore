@@ -14,9 +14,8 @@ venv/
 .idea/
 
 # Traffic Analysis Runtime Data
-data/*.jpg
-data/*.json
-data/*.log
+# Traffic Analysis Runtime Data
+data/
 *.log
 
 # Large Types
