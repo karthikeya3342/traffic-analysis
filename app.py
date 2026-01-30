@@ -30,13 +30,17 @@ def main():
     st.sidebar.header("Control Panel")
 
     # Video Selection
-    video_files = glob.glob("data/*.mp4")
-    selected_video = st.sidebar.selectbox("Select Input Video", video_files, index=0 if video_files else None)
+    st.sidebar.subheader("Input Source")
     
-    # Store selected video in config if needed, or just use for analysis
-    if selected_video and selected_video != config['video']['source']:
-        # Optional: update config in memory or valid for session
-        pass
+    uploaded_file = st.sidebar.file_uploader("Upload Video", type=['mp4', 'avi', 'mov'])
+    if uploaded_file is not None:
+        file_path = f"data/{uploaded_file.name}"
+        with open(file_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+        selected_video = file_path # Override selection
+    else:
+        video_files = glob.glob("data/*.mp4") + glob.glob("data/*.avi")
+        selected_video = st.sidebar.selectbox("Select Existing Video", video_files, index=0 if video_files else None)
 
     # --- Lane Configuration ---
     # This component handles drawing and updating config['analytics']['lanes'] internally
