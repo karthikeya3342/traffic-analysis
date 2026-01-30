@@ -15,7 +15,8 @@ venv/
 
 # Traffic Analysis Runtime Data
 # Traffic Analysis Runtime Data
-data/
+data/*
+!data/.gitkeep
 *.log
 
 # Large Types
