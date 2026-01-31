@@ -52,6 +52,40 @@ def render_lane_config(config, selected_video):
         # Working Copy for Visualization
         display_frame = cv2.resize(frame_rgb, (target_w, target_h))
         
+        # --- LOAD EXISTING CONFIG TO STATE (ONCE) ---
+        if 'lanes_loaded' not in st.session_state:
+            st.session_state['lanes_loaded'] = False
+            
+        if not st.session_state['lanes_loaded']:
+            process_w = config['video'].get('resize_width', 1280)
+            process_h = config['video'].get('resize_height', 720)
+            # Scaling: Processed -> Display
+            load_sx = target_w / process_w
+            load_sy = target_h / process_h
+            
+            # Load Lanes
+            if config['analytics'].get('lanes'):
+                loaded_points = []
+                for lane in config['analytics']['lanes']:
+                    for pt in lane['coords']:
+                         px = int(pt[0] * load_sx)
+                         py = int(pt[1] * load_sy)
+                         loaded_points.append([px, py])
+                st.session_state['lane_temp_points'] = loaded_points
+            
+            # Load Stop Line
+            stop_pts = config['analytics'].get('stop_line_coords', [])
+            if stop_pts:
+                sp_loaded = []
+                for pt in stop_pts:
+                     px = int(pt[0] * load_sx)
+                     py = int(pt[1] * load_sy)
+                     sp_loaded.append([px, py])
+                st.session_state['stop_temp_points'] = sp_loaded
+                
+            st.session_state['lanes_loaded'] = True
+            st.rerun() # Refresh to show loaded points immediately
+        
         # --- DRAWING LOGIC (Server-Side) ---
         mode = st.radio("Mode", ["Lanes", "Stop Line", "Preview Config"], horizontal=True)
         
