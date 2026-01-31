@@ -82,7 +82,10 @@ def render_lane_config(config, selected_video):
                 scale_factor = canvas_width / w
                 canvas_height = int(h * scale_factor)
                 
-                frame_pil = Image.fromarray(frame_resized_rgb)
+                # Explicit conversion to ensure compatibility
+                # Convert straight from original frame_rgb to avoid double resizing artifacts
+                bg_image = Image.fromarray(frame_rgb).convert("RGB")
+                bg_image = bg_image.resize((canvas_width, canvas_height), Image.Resampling.LANCZOS)
                 
                 # Controls
                 col_controls, col_canvas = st.columns([1, 3])
@@ -193,7 +196,7 @@ def render_lane_config(config, selected_video):
                 unique_key = f"canvas_{selected_video}_{len(initial_drawing['objects'])}_{refresh_key}_{mode}"
                 
                 # DEBUG / GUARD: Ensure valid image for Cloud
-                safe_bg = frame_pil
+                safe_bg = bg_image
                 # Ensure it is a PIL Image
                 if not isinstance(safe_bg, Image.Image):
                     st.warning(f"Background image invalid type: {type(safe_bg)}. Using placeholder.")
