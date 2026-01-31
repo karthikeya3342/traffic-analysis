@@ -299,7 +299,34 @@ def main():
             out.release()
             cv2.destroyAllWindows()
             logging.info("Processing complete. Video saved.")
-            
+             
+            # --- FFMPEG RE-ENCODING FOR BROWSER COMPATIBILITY ---
+            try:
+                import subprocess
+                import shutil
+                if shutil.which("ffmpeg"):
+                    logging.info("FFmpeg found. Re-encoding video to H.264...")
+                    
+                    # Rename original to temp
+                    raw_video = config['video']['output'].replace(".mp4", "_raw.mp4")
+                    if os.path.exists(config['video']['output']):
+                        os.replace(config['video']['output'], raw_video)
+                        
+                        # Run conversion (blocking)
+                        subprocess.call([
+                            "ffmpeg", "-y", 
+                            "-i", raw_video,
+                            "-vcodec", "libx264",
+                            "-crf", "23", # Good quality/size balance
+                            "-preset", "fast",
+                            "-pix_fmt", "yuv420p", # Essential for QuickTime/Chrome
+                            config['video']['output']
+                        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        
+                        logging.info("Re-encoding complete.")
+            except Exception as e:
+                logging.error(f"FFmpeg re-encoding failed: {e}")
+
             # Save stats to CSV for dashboard
             import pandas as pd
             # Flatten stats for CSV
