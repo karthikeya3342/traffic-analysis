@@ -84,7 +84,7 @@ def render_lane_config(config, selected_video):
                 
                 # Explicit conversion to ensure compatibility
                 # Convert straight from original frame_rgb to avoid double resizing artifacts
-                bg_image = Image.fromarray(frame_rgb).convert("RGB")
+                bg_image = Image.fromarray(frame_rgb).convert("RGBA")
                 bg_image = bg_image.resize((canvas_width, canvas_height), Image.Resampling.LANCZOS)
                 
                 # Controls
@@ -112,6 +112,11 @@ def render_lane_config(config, selected_video):
                             st.rerun()
                     
                     st.caption("Delete points by selecting them and pressing Del.")
+                    
+                    st.write("---")
+                    st.write("**Reference View**")
+                    st.caption("Use this if canvas is black.")
+                    st.image(bg_image, use_column_width=True)
 
                 # Prepare initial drawing
                 initial_drawing = {"version": "4.4.0", "objects": []}
