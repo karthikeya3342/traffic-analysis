@@ -302,6 +302,7 @@ def main():
                 logging.error(f"Failed to save summary: {e}")
                 
     except Exception as e:
+        # Retry logging
         logging.exception("FATAL ERROR IN MAIN PROCESS")
         raise e
 
