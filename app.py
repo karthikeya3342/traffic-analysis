@@ -55,11 +55,20 @@ def main():
     st.sidebar.info(f"Model: {config['detection']['model']}")
 
     # --- Main Content ---
-    render_metrics(config)
+    # Only show final results if NOT analyzing
     
-    # Use dynamic output path if available (from ProcessManager), else static config
-    output_path = st.session_state.get('current_output_video', config['video']['output'])
-    render_video_output(output_path)
+    # Use a placeholder to ensure we can clear this area or it renders cleanly after analysis
+    results_container = st.empty()
+    
+    if not st.session_state.get('analyzing', False):
+        with results_container.container():
+            render_metrics(config)
+            
+            # Use dynamic output path if available (from ProcessManager), else static config
+            output_path = st.session_state.get('current_output_video', config['video']['output'])
+            render_video_output(output_path)
+    else:
+        results_container.empty()
 
 if __name__ == "__main__":
     main()

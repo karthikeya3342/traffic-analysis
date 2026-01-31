@@ -62,11 +62,11 @@ def render_analysis_control(selected_video, config):
         st.sidebar.markdown("### 🚦 Signal Control")
         col1, col2 = st.sidebar.columns(2)
         
-        if col1.button("🔴 RED", use_container_width=True):
+        if col1.button("🔴 RED", width="stretch"):
             with open("data/signal_state.txt", "w") as f:
                 f.write("RED")
                 
-        if col2.button("🟢 GREEN", use_container_width=True):
+        if col2.button("🟢 GREEN", width="stretch"):
             with open("data/signal_state.txt", "w") as f:
                 f.write("GREEN")
         
@@ -181,7 +181,9 @@ def render_analysis_control(selected_video, config):
                         if img is not None:
                             # Convert BGR to RGB for Streamlit
                             img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                            video_placeholder.image(img_rgb, channels="RGB", use_column_width=True, caption="Live Analysis Feed")
+                            # Convert BGR to RGB for Streamlit
+                            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                            video_placeholder.image(img_rgb, channels="RGB", width="stretch", caption="Live Analysis Feed")
                     else:
                         status_placeholder.info("Waiting for first frame...")
                 except Exception as ex:

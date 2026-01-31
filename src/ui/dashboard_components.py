@@ -22,103 +22,73 @@ def render_metrics(config):
     """
     Renders KPIs and Charts based on stats.csv and final_summary.json
     """
-    kpi1, kpi2, kpi3 = st.columns(3)
-    
     df = read_stats()
     
     if not df.empty:
-        # Default Logic (Fallback)
-        total_vehicles = df['vehicle_count'].iloc[-1]
-        total_violations = df['violations'].sum() # Incorrect aggregate, but best effort without summary
-        avg_density = df['vehicle_count'].mean()
-        
-        # Accurate Logic (if available)
+        # Downsample graphs to show every 30th frame as requested
+        # Only apply if we have enough data to make a graph
+        if len(df) > 30:
+            df = df.iloc[::30, :]
+            
+        # Load summary for classification/logs
+        summary = {}
         if os.path.exists(SUMMARY_FILE):
             try:
-                with open(SUMMARY_FILE, "r") as f:
-                    summary = json.load(f)
-                    total_violations = summary.get("total_violations", total_violations)
-                    # vehicle_count and density usually fine from CSV, but can update if needed
-            except:
-                pass
+                with open(SUMMARY_FILE, "r") as f: summary = json.load(f)
+            except: pass
 
-        kpi1.metric("Current Vehicles", int(total_vehicles))
-        kpi2.metric("Total Violations", int(total_violations))
-        kpi3.metric("Avg Density", f"{avg_density:.1f}")
+        # --- GRAPHS SECTION (Replacing KPIs) ---
+        st.subheader("📈 Analysis Trends")
+        g1, g2 = st.columns(2)
+        with g1:
+            st.markdown("**🚗 Vehicles / Time**")
+            st.line_chart(df, x='frame', y='vehicle_count', height=250)
+        with g2:
+            st.markdown("**🚦 Queue Density Trend**")
+            d_cols = [c for c in df.columns if '_density' in c]
+            if d_cols:
+                st.line_chart(df, x='frame', y=d_cols, height=250)
+            else:
+                 # Fallback to counts if density missing
+                 c_cols = [c for c in df.columns if '_count' in c]
+                 st.line_chart(df, x='frame', y=c_cols, height=250)
         
         st.markdown("---")
         
-        # Vehicle Classification Chart
-        class_counts = summary.get("class_distribution", {})
-        if class_counts:
-             st.subheader("📊 Vehicle Classification")
-             
-             # Convert to lists for plotting
-             labels = [k.title() for k in class_counts.keys()]
-             sizes = list(class_counts.values())
-             
-             # Create Pie Chart
-             fig1, ax1 = plt.subplots(figsize=(3, 3))
-             # Use a dark-mode friendly style if possible, but default is okay with transparent bg
-             wedges, texts, autotexts = ax1.pie(
-                 sizes, 
-                 labels=labels, 
-                 autopct='%1.1f%%', 
-                 startangle=90,
-                 textprops={'color': "white"} # Assuming dark theme for better visibility
-             )
-             
-             # Equal aspect ratio ensures that pie is drawn as a circle
-             ax1.axis('equal')  
-             
-             # Transparent background
-             fig1.patch.set_alpha(0)
-             
-             # Render
-             c_pie, _ = st.columns([1, 2]) # Limit width
-             with c_pie:
-                st.pyplot(fig1, use_container_width=True)
-             
-             plt.close(fig1)
-             
-             st.markdown("---")
-
-        # Breakdown Section (Side-by-Side)
-        c_queue, c_log = st.columns([1, 1])
+        # --- CLASSIFICATION & LOGS ---
+        c_pie, c_log = st.columns([1, 1])
         
-        # 1. Lane Queue Details (Left)
-        with c_queue:
-            st.markdown("### 🚙 Lane Queue Details (Final)")
-            queue_stats = summary.get("queue_stats", {})
-            if queue_stats:
-                for lane_name, data in queue_stats.items():
-                    count = data.get('count', 0)
-                    progress_value = min(count / 20.0, 1.0)
-                    
-                    sub_c1, sub_c2 = st.columns([1, 2])
-                    sub_c1.write(f"**{lane_name}**")
-                    sub_c2.progress(progress_value, text=f"{count} veh")
-            else:
-                st.info("No queue data.")
+        with c_pie:
+             st.subheader("📊 Vehicle Classification")
+             class_counts = summary.get("class_distribution", {})
+             if class_counts:
+                 # Pie Chart Logic
+                 labels = [k.title() for k in class_counts.keys()]
+                 sizes = list(class_counts.values())
+                 fig1, ax1 = plt.subplots(figsize=(2, 2))
+                 ax1.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, textprops={'color': "white", 'fontsize': 8})
+                 ax1.axis('equal')
+                 fig1.patch.set_alpha(0)
+                 
+                 # Constrain width
+                 sub_c, _ = st.columns([2, 3])
+                 with sub_c:
+                     st.pyplot(fig1, width="stretch")
+                 plt.close(fig1)
+             else:
+                 st.info("No classification data.")
 
-        # 2. Violation Log History (Right)
         with c_log:
-            recent_violations = summary.get("recent_violations", [])
-            if recent_violations:
-                st.markdown("### 📜 Violation Log History")
-                df_log = pd.DataFrame(recent_violations)
-                df_log = df_log[["time", "type", "vehicle_id"]]
-                df_log.columns = ["Time", "Type", "Vehicle ID"]
-                
-                # Show top 10 rows by default
-                st.dataframe(df_log.head(10), use_container_width=True)
-                
-                # Expander for full list
-                with st.expander("View Full Log", expanded=False):
-                    st.dataframe(df_log, use_container_width=True)
-                    st.caption(f"Total entries: {len(df_log)}")
-            else:
-                st.info("No violations recorded.")
+             st.subheader("📜 Violation Log")
+             recent = summary.get("recent_violations", [])
+             if recent:
+                  df_log = pd.DataFrame(recent)
+                  if not df_log.empty:
+                      df_log = df_log[["time", "type", "vehicle_id"]]
+                      df_log.columns = ["Time", "Type", "ID"]
+                      st.dataframe(df_log, height=250, width="stretch")
+             else:
+                  st.info("No violations recorded.")
         
         st.markdown("---")
         
@@ -135,10 +105,10 @@ def render_metrics(config):
                     data=csv_data,
                     file_name="traffic_analysis_stats.csv",
                     mime="text/csv",
-                    use_container_width=True
+                    width="stretch"
                 )
             else:
-                st.button("Stats CSV Not Available", disabled=True, use_container_width=True)
+                st.button("Stats CSV Not Available", disabled=True, width="stretch")
 
         with ec2:
             if os.path.exists(SUMMARY_FILE):
@@ -149,10 +119,10 @@ def render_metrics(config):
                     data=json_data,
                     file_name="traffic_summary.json",
                     mime="application/json",
-                    use_container_width=True
+                    width="stretch"
                 )
             else:
-                 st.button("Summary JSON Not Available", disabled=True, use_container_width=True)
+                 st.button("Summary JSON Not Available", disabled=True, width="stretch")
 
     else:
         st.warning("No stats available yet. Run analysis from the sidebar.")
@@ -273,16 +243,16 @@ def update_live_dashboard(placeholders: dict, stats: dict):
                  labels = [k.title() for k in class_counts.keys()]
                  sizes = list(class_counts.values())
                  
-                 fig_live, ax_live = plt.subplots(figsize=(3, 3))
+                 fig_live, ax_live = plt.subplots(figsize=(2, 2))
                  ax_live.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90,
-                             textprops={'color': "white"})
+                             textprops={'color': "white", 'fontsize': 8})
                  ax_live.axis('equal')
                  fig_live.patch.set_alpha(0)
                  
                  # Render
                  c_p1, _ = st.columns([1, 2])
                  with c_p1:
-                     st.pyplot(fig_live, use_container_width=True)
+                     st.pyplot(fig_live, width="stretch")
                  plt.close(fig_live)
             else:
                  st.info("Waiting for classification data...")
