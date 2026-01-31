@@ -183,12 +183,11 @@ def render_analysis_control(selected_video, config):
                             img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                             # Convert BGR to RGB for Streamlit
                             img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                            video_placeholder.image(img_rgb, channels="RGB", use_container_width=True, caption="Live Analysis Feed")
+                            video_placeholder.image(img_rgb, channels="RGB", caption="Live Analysis Feed")
                     else:
                         status_placeholder.info("Waiting for first frame...")
                 except Exception as ex:
-                    # status_placeholder.error(f"Frame Error: {ex}")
-                    pass
+                    status_placeholder.error(f"Frame Error: {ex}")
 
                 # 1. Update Logs
                 if os.path.exists(log_file):
