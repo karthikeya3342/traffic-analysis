@@ -105,6 +105,20 @@ def render_analysis_control(selected_video, config):
             if process is None or process.poll() is not None:
                 status_placeholder.text("Starting process...")
                 
+                # --- CLEANUP OLD VIDEOS ---
+                try:
+                    video_files = [f for f in os.listdir("data") if f.startswith("output_") and f.endswith(".mp4")]
+                    if len(video_files) > 3:
+                        # Sort by time (oldest first)
+                        video_files.sort(key=lambda x: os.path.getmtime(os.path.join("data", x)))
+                        # Delete oldest, keep last 3
+                        for old_file in video_files[:-3]:
+                            try: os.remove(os.path.join("data", old_file))
+                            except: pass
+                except Exception:
+                    pass
+                # --------------------------
+                
                 # Generate unique output filename to bust cache
                 unique_output = f"data/output_{int(time.time())}.mp4"
                 st.session_state['current_output_video'] = unique_output
