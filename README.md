@@ -2,40 +2,52 @@
 
 A comprehensive computer vision solution for real-time traffic monitoring, queue analysis, and violation detection using YOLO and Streamlit.
 
+🌐 **Live Demo (Deployed on Streamlit Cloud):**  
+👉 https://karthikeya3342-traffic-analysis-app-abfhnv.streamlit.app/
+
 <img width="1919" height="877" alt="image" src="https://github.com/user-attachments/assets/30f93ad7-5ebf-4221-94cf-8959b0aeca05" />
 
+---
 
 ## ✨ Features
 
--   **Real-time Vehicle Counting**: DetectsCars, Buses, Trucks, and Motorcycles using YOLOv11/v8.
--   **Queue Analysis**:
-    -   **Density Estimation**: Area-based calculation for accurate congestion reporting.
-    -   **Lane-wise Monitoring**: Configurable ROIs for multiple lanes.
--   **Violation Detection**:
-    -   **Red Light Violation**: Identifies vehicles crossing stop lines when signal is RED.
-    -   **Rash Driving**: Detects aggressive driving behaviors.
--   **Interactive Dashboard**:
-    -   Live Video Feed with Overlays.
-    -   Real-time Metrics (Counters, Queue Status).
-    -   **Post-Analysis Trends**: Dynamic graphs for Vehicle Volume and Queue Density per 30 frames.
-    -   **Data Export**: Download detailed CSV logs and JSON summaries.
--   **Smart Configuration**:
-    -   Draw lanes and stop lines directly in the UI.
-    -   Auto-save and auto-load configurations.
+- **Real-time Vehicle Counting**  
+  Detects Cars, Buses, Trucks, and Motorcycles using YOLOv11 / YOLOv8.
+
+- **Queue Analysis**
+  - **Density Estimation**: Area-based queue density calculation for accurate congestion reporting.
+  - **Lane-wise Monitoring**: Supports multiple lanes using configurable ROIs.
+
+- **Violation Detection**
+  - **Red Light Violation**: Detects vehicles crossing stop lines during RED signals.
+  - **Rash Driving Detection**: Flags aggressive or abnormal driving behavior.
+
+- **Interactive Dashboard**
+  - Live video feed with bounding boxes and overlays
+  - Real-time counters and queue status
+  - **Post-analysis trends**: Dynamic graphs for vehicle volume and queue density (per 30 frames)
+  - **Data export**: Download CSV logs and JSON summaries
+
+- **Smart Configuration**
+  - Draw lanes and stop lines directly in the UI
+  - Auto-save and auto-load lane configurations
+
+---
 
 ## 🛠️ Installation
 
 ### Prerequisites
--   Python 3.8+
--   CUDA-enabled GPU (Recommended) or CPU
--   FFmpeg (for video re-encoding)
+- Python 3.8 or higher
+- CUDA-enabled GPU (recommended) or CPU
+- FFmpeg (for video re-encoding)
 
 ### Steps
-1.  **Clone the Repository**:
-    ```bash
-    git clone https://github.com/karthikeya3342/traffic-analysis.git
-    cd traffic-analysis
-    ```
+
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/karthikeya3342/traffic-analysis.git
+   cd traffic-analysis
+   ```
 
 2.  **Install Dependencies**:
     ```bash
