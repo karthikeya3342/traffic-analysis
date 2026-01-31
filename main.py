@@ -1,33 +1,43 @@
-import yaml
-import cv2
-import time
 import logging
 import os
-import json
-from src.loader import VideoLoader
-from src.detector import MockDetector, YoloDetector
-from src.tracker import SimpleTracker
-from src.analytics import TrafficAnalytics
-from src.visualizer import Visualizer
-from src.utils import get_centroid
+import sys
 
-# Setup logging
+# Setup logging immediately to catch early errors
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def load_config(path="config/config.yaml"):
-    with open(path, 'r') as f:
-        return yaml.safe_load(f)
-
-import argparse
-
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--source", type=str, help="Path to input video file", default=None)
-    args = parser.parse_args()
-
     try:
+        # --- LATE IMPORTS TO CATCH ERRORS ---
+        import yaml
+        import cv2
+        import time
+        import json
+        import argparse
+        from collections import deque, Counter
+        
+        # Local Imports
+        from src.loader import VideoLoader
+        from src.detector import MockDetector, YoloDetector
+        from src.tracker import SimpleTracker
+        from src.analytics import TrafficAnalytics
+        from src.visualizer import Visualizer
+        from src.utils import get_centroid
+        
+        # Ensure data directory exists
+        os.makedirs("data", exist_ok=True)
+        
+        logging.info("DeepModules Imported Successfully.")
+
+        def load_config(path="config/config.yaml"):
+            with open(path, 'r') as f:
+                return yaml.safe_load(f)
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--source", type=str, help="Path to input video file", default=None)
+        args = parser.parse_args()
+
         config = load_config()
-    
+        
         # Override config if CLI arg provided
         if args.source:
             config['video']['source'] = args.source
@@ -68,7 +78,6 @@ def main():
         all_stats = []
         total_unique_violations = set()
         
-        from collections import deque
         recent_violations_deque = deque(maxlen=10)
     
                 # State for analytics
@@ -77,7 +86,6 @@ def main():
         class_counts = {} # { 'car': 0, 'bus': 0 ... }
         display_violations = {} # {id: {'data': v, 'expiry': timestamp}}
         
-        from collections import deque, Counter
         # Queue for on-screen annotations (Latest 5, persistent until replaced)
         annotation_queue = deque(maxlen=5) 
         # Full log for dashboard
@@ -304,6 +312,10 @@ def main():
     except Exception as e:
         # Retry logging
         logging.exception("FATAL ERROR IN MAIN PROCESS")
+        try:
+             # Force formatted output to stderr for Streamlit to catch if file fails
+             sys.stderr.write(f"\nCRITICAL ERROR: {e}\n")
+        except: pass
         raise e
 
 if __name__ == "__main__":
