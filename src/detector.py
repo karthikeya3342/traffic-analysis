@@ -50,7 +50,8 @@ class MockDetector(TrafficDetector):
                 'bbox': [x, y, x+w, y+h],
                 'class_id': 2,
                 'class_name': 'car',
-                'confidence': 0.95
+                'confidence': 0.95,
+                'track_id': i
             })
         return detections
 

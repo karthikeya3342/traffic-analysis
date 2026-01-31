@@ -120,6 +120,7 @@ def main():
         
         # Class Stability Tracking
         class_history = {} # {id: Counter()}
+        queue_stats = {} # Initialize to empty dict to prevent UnboundLocalError
     
         # INNER TRY (Loop)
         try:
@@ -145,7 +146,9 @@ def main():
                 
                 for d in detections:
                      # ... (Unchanged) ...
-                     obj_id = d['track_id']
+                     obj_id = d.get('track_id', -1)
+                     if obj_id == -1: continue # Skip if no ID
+                     
                      centroid = get_centroid(d['bbox'])
                      
                      # --- Class Stability/Voting ---
