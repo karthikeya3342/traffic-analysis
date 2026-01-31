@@ -4,8 +4,8 @@ import yaml
 import numpy as np
 import time
 from PIL import Image
-import base64
-import io
+
+# ... (get_first_frame remains same) ...
 
 # @st.cache_data removed for debugging
 def get_first_frame(video_path):
@@ -19,271 +19,163 @@ def get_first_frame(video_path):
     return None
 
 def render_lane_config(config, selected_video):
-    """
-    Renders the lane configuration expander and canvas.
-    Returns: None (Functions via callbacks/direct config modification)
-    """
-    if 'lane_canvas_key' not in st.session_state:
-        st.session_state['lane_canvas_key'] = 0
-    if 'last_lane_video' not in st.session_state:
-        st.session_state['last_lane_video'] = None
-    if 'force_lane_expand' not in st.session_state:
-        st.session_state['force_lane_expand'] = False
+    # Initialize Session State
+    if 'lane_temp_points' not in st.session_state:
+        st.session_state['lane_temp_points'] = []
+    if 'stop_temp_points' not in st.session_state:
+        st.session_state['stop_temp_points'] = []
+    if 'last_click' not in st.session_state:
+        st.session_state['last_click'] = None
 
-    # Determine expander state: Auto-open if no lanes or if freshly refreshed
-    has_lanes = len(config['analytics'].get('lanes', [])) > 0
-    expanded_state = (not has_lanes) or st.session_state['force_lane_expand']
-
-    with st.expander("Configure Lanes (Draw on Video)", expanded=expanded_state):
-        # Reset force flag after using it
-        if st.session_state['force_lane_expand']:
-             st.session_state['force_lane_expand'] = False
-             
-        st.write("Draw rectangles on the video frame to define lanes.")
-        
-        # Check import
+    with st.expander("Configure Lanes (Click to Draw)", expanded=True):
         try:
-            from streamlit_drawable_canvas import st_canvas
+            from streamlit_image_coordinates import streamlit_image_coordinates
         except ImportError:
-            st.error("Please install the library: pip install streamlit-drawable-canvas")
-            st.stop()
+            st.error("Please install: pip install streamlit-image-coordinates")
+            return
 
-        if selected_video:
-            # Auto-refresh on video change to fix initialization issues
-            if st.session_state['last_lane_video'] != selected_video:
-                st.session_state['last_lane_video'] = selected_video
-                st.session_state['lane_canvas_key'] += 1
-                st.session_state['force_lane_expand'] = True # Force open on refresh
-                st.rerun()
+        if not selected_video:
+            st.info("Select a video first.")
+            return
+
+        frame_rgb = get_first_frame(selected_video)
+        if frame_rgb is None:
+            st.error("Could not load video.")
+            return
+
+        # Resize for display
+        target_w = 700
+        h, w = frame_rgb.shape[:2]
+        ratio = target_w / w
+        target_h = int(h * ratio)
+        
+        # Working Copy for Visualization
+        display_frame = cv2.resize(frame_rgb, (target_w, target_h))
+        
+        # --- DRAWING LOGIC (Server-Side) ---
+        mode = st.radio("Mode", ["Lanes", "Stop Line", "Preview Config"], horizontal=True)
+        
+        # Draw Existing Config
+        if mode == "Preview Config":
+             # Draw Lanes from Config
+             for lane in config['analytics'].get('lanes', []):
+                 pts = np.array(lane['coords'], dtype=np.int32)
+                 # Scale to display
+                 pts = (pts * ratio).astype(np.int32)
+                 cv2.polylines(display_frame, [pts], True, (0, 255, 0), 2)
+                 centroid = np.mean(pts, axis=0).astype(int)
+                 cv2.putText(display_frame, str(lane.get('id', '?')), tuple(centroid), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
             
-            # DEBUG PATH
-            if selected_video:
-                import os
-                exists = os.path.exists(selected_video)
-                st.write(f"DEBUG: Video Path: '{selected_video}' | Exists: {exists}")
-                if exists:
-                    st.write(f"DEBUG: File Size: {os.path.getsize(selected_video)} bytes")
+             # Draw Stop Line
+             stop_pts = config['analytics'].get('stop_line_coords', [])
+             if len(stop_pts) == 2:
+                 p1 = (int(stop_pts[0][0] * ratio), int(stop_pts[0][1] * ratio))
+                 p2 = (int(stop_pts[1][0] * ratio), int(stop_pts[1][1] * ratio))
+                 cv2.line(display_frame, p1, p2, (255, 0, 0), 3)
+
+        # Draw Temp Points (Interactive)
+        current_points = st.session_state['lane_temp_points'] if mode == "Lanes" else st.session_state['stop_temp_points']
+        
+        # Draw completed polygons/lines currently in buffer
+        if mode == "Lanes":
+            # Draw completed quads
+            for i in range(0, len(current_points), 4):
+                chunk = current_points[i:i+4]
+                if len(chunk) == 4:
+                     pts = np.array(chunk, dtype=np.int32)
+                     cv2.polylines(display_frame, [pts], True, (0, 255, 0), 2)
+            # Draw active uncompleted points
+            remainder = len(current_points) % 4
+            if remainder > 0:
+                 active = current_points[-remainder:]
+                 for pt in active:
+                     cv2.circle(display_frame, tuple(pt), 4, (255, 165, 0), -1)
+
+        elif mode == "Stop Line":
+            if (len(current_points) == 2):
+                 cv2.line(display_frame, tuple(current_points[0]), tuple(current_points[1]), (255, 0, 0), 2)
+            for pt in current_points:
+                cv2.circle(display_frame, tuple(pt), 4, (255, 165, 0), -1)
+
+        # --- INTERACTION ---
+        st.write(f"**Instructions**: Click on the image to add points. Mode: {mode}")
+        if mode == "Lanes":
+            st.caption(f"Points: {len(current_points)} (Needs multiple of 4)")
+        elif mode == "Stop Line":
+            st.caption(f"Points: {len(current_points)}/2")
+
+        # Render Interface
+        value = streamlit_image_coordinates(
+            Image.fromarray(display_frame),
+            key="click_interaction",
+            width=target_w,
+        )
+
+        # Handle Click
+        if value is not None and value != st.session_state['last_click']:
+            st.session_state['last_click'] = value
+            x = value['x']
+            y = value['y']
             
-            # Use cached frame getter
-            frame_rgb = get_first_frame(selected_video)
-
-            if frame_rgb is not None:
-                # Resize logic (needs original dims from frame_rgb)
-                h_orig, w_orig = frame_rgb.shape[:2]
-                
-                target_w = config['video'].get('resize_width', 1280)
-                target_h = config['video'].get('resize_height', 720)
-                
-                # Resize using cv2 (need to convert back to BGR for resize? No, resize works on RGB)
-                # But frame_rgb is numpy array.
-                frame_resized_rgb = cv2.resize(frame_rgb, (target_w, target_h))
-
-                # Resize for Canvas (Display only)
-                canvas_width = 700
-                h, w = frame_resized_rgb.shape[:2]
-                scale_factor = canvas_width / w
-                canvas_height = int(h * scale_factor)
-                
-                # Explicit conversion to ensure compatibility
-                bg_image = Image.fromarray(frame_rgb).convert("RGB")
-                bg_image = bg_image.resize((canvas_width, canvas_height), Image.Resampling.LANCZOS)
-                
-                # ✅ CLOUD FIX: Sanitize PIL Image
-                # Save to buffer and reload to remove any Numpy memory view artifacts
-                # preventing the "Black Screen" issue.
-                buffered = io.BytesIO()
-                bg_image.save(buffered, format="JPEG")
-                bg_image = Image.open(buffered) # Reload clean image
-                
-                # Controls
-                col_controls, col_canvas = st.columns([1, 3])
-                
-                with col_controls:
-                    st.write("**Controls**")
-                    mode = st.radio("Edit Mode", ["Lanes", "Stop Line"], horizontal=True)
-                    
-                    bc1, bc2 = st.columns(2)
-                    with bc1:
-                        if st.button("Refresh", help="Refresh Image", use_container_width=True):
-                            st.session_state['lane_canvas_key'] += 1
-                            st.rerun()
-                    with bc2:
-                        if st.button("Clear", help="Clear Items", use_container_width=True):
-                            if mode == "Lanes":
-                                config['analytics']['lanes'] = []
-                            else:
-                                config['analytics']['stop_line_coords'] = []
-                            
-                            with open("config/config.yaml", "w") as f:
-                                yaml.dump(config, f)
-                            st.session_state['lane_canvas_key'] += 1 
-                            st.rerun()
-                    
-                    st.caption("Delete points by selecting them and pressing Del.")
-                    
-                    st.write("---")
-                    st.write("**Reference View**")
-                    st.caption("Use this if canvas is black.")
-                    st.image(bg_image, use_column_width=True)
-
-                # Prepare initial drawing
-                initial_drawing = {"version": "4.4.0", "objects": []}
-                
+            if mode != "Preview Config":
+                # Add point (server-side list)
                 if mode == "Lanes":
-                    if 'lanes' in config['analytics']:
-                        for lane in config['analytics']['lanes']:
-                            coords = lane['coords']
-                            points = []
-                            if len(coords) == 4 and isinstance(coords[0], (int, float)):
-                                x1, y1, x2, y2 = coords
-                                points = [[x1, y1], [x2, y1], [x2, y2], [x1, y2]]
-                            else:
-                                points = coords
-                            
-                            if points:
-                                # Visual Path
-                                scaled_path = []
-                                start = points[0]
-                                scaled_path.append(['M', start[0] * scale_factor, start[1] * scale_factor])
-                                for p in points[1:]: 
-                                    scaled_path.append(['L', p[0] * scale_factor, p[1] * scale_factor])
-                                scaled_path.append(['Z'])
-                                
-                                initial_drawing['objects'].append({
-                                    "type": "path",
-                                    "path": scaled_path,
-                                    "fill": "rgba(0, 255, 0, 0.2)",
-                                    "stroke": "green",
-                                    "strokeWidth": 1,
-                                    "selectable": False,
-                                    "evented": False
-                                })
-                                # Control Points
-                                for p in points:
-                                    initial_drawing['objects'].append({
-                                        "type": "circle",
-                                        "left": (p[0] * scale_factor) - 5,
-                                        "top": (p[1] * scale_factor) - 5,
-                                        "radius": 5, "fill": "red", "stroke": "white", "strokeWidth": 1
-                                    })
-                else: # Stop Line
-                    stop_coords = config['analytics'].get('stop_line_coords')
-                    points = []
-                    if stop_coords and len(stop_coords) == 2:
-                        points = stop_coords
-                    else:
-                        sy = config['analytics'].get('stop_line_y', 500)
-                        points = [[100, sy], [w_orig-100, sy]]
-                    
-                    if points:
-                        # Visual Line
-                        p1, p2 = points[0], points[1]
-                        initial_drawing['objects'].append({
-                            "type": "line",
-                            "x1": p1[0] * scale_factor,
-                            "y1": p1[1] * scale_factor,
-                            "x2": p2[0] * scale_factor,
-                            "y2": p2[1] * scale_factor,
-                            "stroke": "red",
-                            "strokeWidth": 2,
-                            "strokeDashArray": [5, 5],
-                            "selectable": False, "evented": False
-                        })
-                        # Control Points
-                        for p in points:
-                            initial_drawing['objects'].append({
-                                "type": "circle",
-                                "left": (p[0] * scale_factor) - 5,
-                                "top": (p[1] * scale_factor) - 5,
-                                "radius": 5, "fill": "orange", "stroke": "white", "strokeWidth": 1
-                            })
-
-                # Create Canvas
-                if mode == "Lanes":
-                    st.write("👉 **Lanes**: Click 4 points to define a lane.")
+                    st.session_state['lane_temp_points'].append([x, y])
                 else:
-                    st.write("👉 **Stop Line**: Click 2 points to define the line.")
+                    if len(st.session_state['stop_temp_points']) < 2:
+                         st.session_state['stop_temp_points'].append([x, y])
+                    else:
+                         # Reset if full
+                         st.session_state['stop_temp_points'] = [[x, y]]
+                st.rerun()
 
-                # Dynamic Key
-                refresh_key = st.session_state['lane_canvas_key']
-                unique_key = f"canvas_{selected_video}_{len(initial_drawing['objects'])}_{refresh_key}_{mode}"
-                
-                try:
-                    canvas_result = st_canvas(
-                        fill_color="rgba(0, 255, 0, 0.3)",
-                        stroke_width=2,
-                        stroke_color="green",
-                        background_image=bg_image, # Use the sanitized PIL Image
-                        background_color="#ffffff",
-                        update_streamlit=True,
-                        height=canvas_height,
-                        width=canvas_width,
-                        drawing_mode="point",
-                        point_display_radius=5,
-                        initial_drawing=initial_drawing,
-                        key=unique_key,
-                    )
-                except Exception as e:
-                     st.error(f"Canvas Error: {e}")
-                     return
-                
-                if canvas_result.json_data is not None:
-                    objects = canvas_result.json_data["objects"]
+        # Save/Clear Controls
+        c1, c2 = st.columns(2)
+        if c1.button("Clear Current Points"):
+            if mode == "Lanes":
+                st.session_state['lane_temp_points'] = []
+            elif mode == "Stop Line":
+                st.session_state['stop_temp_points'] = []
+            st.rerun()
+            
+        if c2.button("💾 Save to Config"):
+            # Scaling back to original resolution
+            scale_monitor = w / target_w
+            
+            if mode == "Lanes":
+                lanes_data = []
+                pts = st.session_state['lane_temp_points']
+                if len(pts) > 0 and len(pts) % 4 == 0:
+                    for i in range(len(pts) // 4):
+                        # Get 4 points, scale them
+                        poly = []
+                        for p in pts[i*4 : (i+1)*4]:
+                            poly.append([int(p[0] * scale_monitor), int(p[1] * scale_monitor)])
+                        
+                        lanes_data.append({
+                            "id": i+1,
+                            "name": f"Lane {i+1}",
+                            "coords": poly
+                        })
+                    config['analytics']['lanes'] = lanes_data
+                    st.success(f"Saved {len(lanes_data)} lanes!")
+                else:
+                    st.error("Need exactly 4 points per lane.")
                     
-                    if st.button("💾 Save Configuration", use_container_width=True):
-                        # Extract all circles (Points)
-                        all_points = []
-                        for obj in objects:
-                            if obj["type"] == "circle":
-                                r = obj.get("radius", 5)
-                                x_center = obj["left"] + r
-                                y_center = obj["top"] + r
-                                x_orig = int(x_center / scale_factor)
-                                y_orig = int(y_center / scale_factor)
-                                all_points.append([x_orig, y_orig])
-                        
-                        if mode == "Lanes":
-                            if len(all_points) % 4 != 0:
-                                st.warning(f"⚠️ Lanes require exactly 4 points. Saving {len(all_points)//4} lanes.")
+            elif mode == "Stop Line":
+                pts = st.session_state['stop_temp_points']
+                if len(pts) == 2:
+                    p1 = [int(pts[0][0] * scale_monitor), int(pts[0][1] * scale_monitor)]
+                    p2 = [int(pts[1][0] * scale_monitor), int(pts[1][1] * scale_monitor)]
+                    config['analytics']['stop_line_coords'] = [p1, p2]
+                    # Clean legacy
+                    if 'stop_line_y' in config['analytics']:
+                        del config['analytics']['stop_line_y']
+                    st.success("Stop line saved!")
+                else:
+                    st.error("Need exactly 2 points.")
 
-                            new_lane_config = []
-                            num_lanes = len(all_points) // 4
-                            for i in range(num_lanes):
-                                lane_points = all_points[i*4 : (i+1)*4]
-                                new_lane_config.append({
-                                    "id": i+1,
-                                    "name": f"Lane {i+1}",
-                                    "coords": lane_points
-                                })
-                            config['analytics']['lanes'] = new_lane_config
-                            st.success(f"✅ Saved {len(new_lane_config)} lanes!")
-                            
-                        else: # Stop Line
-                            # Logic: If user added new points, they are at the end.
-                            # If total points >= 2, default to the LAST 2 points.
-                            if len(all_points) < 2:
-                                st.error(f"⚠️ Stop Line requires at least 2 points. You have {len(all_points)}.")
-                                return # Don't save
-                            
-                            if len(all_points) > 2:
-                                st.warning(f"Found {len(all_points)} points. Using the last 2 points as the new Stop Line.")
-                                all_points = all_points[-2:]
-                            
-                            config['analytics']['stop_line_coords'] = all_points
-                            # Remove legacy Y to prefer coords
-                            if 'stop_line_y' in config['analytics']:
-                                del config['analytics']['stop_line_y']
-                            st.success("✅ Stop Line Saved!")
-
-                        # Write to file
-                        with open("config/config.yaml", "w") as f:
-                            yaml.dump(config, f)
-                        
-                        time.sleep(1) 
-                        st.session_state['lane_canvas_key'] += 1
-                        st.rerun()
-
-            else:
-                st.error("Could not read video frame.")
-        else:
-            st.info("Select a video to configure lanes.")
+            with open("config/config.yaml", "w") as f:
+                yaml.dump(config, f)
+            time.sleep(1)
+            st.rerun()
