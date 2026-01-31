@@ -2,7 +2,7 @@ streamlit==1.29.0
 opencv-python-headless
 pandas
 ultralytics
-pyyaml
+PyYAML
 scikit-learn
 streamlit-drawable-canvas>=0.9.3
 numpy

@@ -4,6 +4,7 @@ import time
 import json
 import os
 import pandas as pd
+import sys
 from src.ui.dashboard_components import init_live_dashboard, update_live_dashboard
 
 def stop_running_process():
@@ -107,7 +108,7 @@ def render_analysis_control(selected_video, config):
                 f_log = open(log_file, "w") # Overwrite for new run
                 
                 process = subprocess.Popen(
-                    ["python", "main.py", "--source", selected_video],
+                    [sys.executable, "main.py", "--source", selected_video],
                     stdout=f_log,
                     stderr=subprocess.STDOUT,
                     text=True,
