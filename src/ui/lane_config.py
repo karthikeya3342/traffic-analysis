@@ -5,7 +5,7 @@ import numpy as np
 import time
 from PIL import Image
 
-@st.cache_data
+# @st.cache_data removed for debugging
 def get_first_frame(video_path):
     cap = cv2.VideoCapture(video_path)
     for _ in range(30):
@@ -66,6 +66,7 @@ def render_lane_config(config, selected_video):
             frame_rgb = get_first_frame(selected_video)
 
             if frame_rgb is not None:
+                st.write(f"DEBUG: Frame Loaded. Shape: {frame_rgb.shape}. Mean Pxl Value: {np.mean(frame_rgb):.2f}")
                 # Resize logic (needs original dims from frame_rgb)
                 h_orig, w_orig = frame_rgb.shape[:2]
                 
