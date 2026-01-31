@@ -81,9 +81,7 @@ Instead of relying on automatic lane detection (which can fail due to faded mark
 
 - **Queue Density (Pixel Occupancy Ratio):**  
 
-  \[
-  \rho = \frac{\sum (\text{Area of Vehicle Bounding Boxes} \cap \text{Lane ROI})}{\text{Total Area of Lane ROI}}
-  \]
+  $\rho = \dfrac{\sum (\text{Area of Vehicle Bounding Boxes} \cap \text{Lane ROI})}{\text{Total Area of Lane ROI}}$
 
   This provides a normalized, camera-invariant measure of congestion and satisfies the “vehicles per unit area” requirement.
 
