@@ -34,6 +34,7 @@ def main():
 
         parser = argparse.ArgumentParser()
         parser.add_argument("--source", type=str, help="Path to input video file", default=None)
+        parser.add_argument("--output", type=str, help="Path to output video file", default=None)
         args = parser.parse_args()
 
         config = load_config()
@@ -42,6 +43,10 @@ def main():
         if args.source:
             config['video']['source'] = args.source
             logging.info(f"Overriding video source: {args.source}")
+            
+        if args.output:
+            config['video']['output'] = args.output
+            logging.info(f"Overriding output path: {args.output}")
         
         # Initialize modules
         loader = VideoLoader(config['video']['source'], 

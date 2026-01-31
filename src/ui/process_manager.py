@@ -104,11 +104,16 @@ def render_analysis_control(selected_video, config):
             # START NEW PROCESS if needed
             if process is None or process.poll() is not None:
                 status_placeholder.text("Starting process...")
+                
+                # Generate unique output filename to bust cache
+                unique_output = f"data/output_{int(time.time())}.mp4"
+                st.session_state['current_output_video'] = unique_output
+                
                 # Open log file
                 f_log = open(log_file, "w") # Overwrite for new run
                 
                 process = subprocess.Popen(
-                    [sys.executable, "main.py", "--source", selected_video],
+                    [sys.executable, "main.py", "--source", selected_video, "--output", unique_output],
                     stdout=f_log,
                     stderr=subprocess.STDOUT,
                     text=True,

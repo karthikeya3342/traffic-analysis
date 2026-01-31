@@ -57,7 +57,9 @@ def main():
     # --- Main Content ---
     render_metrics(config)
     
-    render_video_output(config['video']['output'])
+    # Use dynamic output path if available (from ProcessManager), else static config
+    output_path = st.session_state.get('current_output_video', config['video']['output'])
+    render_video_output(output_path)
 
 if __name__ == "__main__":
     main()
