@@ -8,10 +8,12 @@ from PIL import Image
 @st.cache_data
 def get_first_frame(video_path):
     cap = cv2.VideoCapture(video_path)
-    ret, frame = cap.read()
+    for _ in range(30):
+        ret, frame = cap.read()
+        if ret and frame is not None and np.sum(frame) > 0:
+            cap.release()
+            return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     cap.release()
-    if ret:
-        return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     return None
 
 def render_lane_config(config, selected_video):
