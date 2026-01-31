@@ -159,8 +159,16 @@ def render_metrics(config):
 
 def render_video_output(video_path):
     st.subheader("Processed Video Output")
-    if os.path.exists(video_path):
-        st.video(video_path)
+    
+    # DEBUG
+    exists = os.path.exists(video_path)
+    st.warning(f"DEBUG: Checking for video at: `{video_path}`")
+    st.warning(f"DEBUG: Exists: `{exists}`")
+    if exists:
+         st.warning(f"DEBUG: Size: {os.path.getsize(video_path)} bytes")
+
+    if exists:
+        st.video(video_path) # Simplified video call from previous step
     else:
         st.info("Waiting for processed video output...")
 
