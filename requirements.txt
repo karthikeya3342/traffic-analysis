@@ -7,3 +7,4 @@ scikit-learn
 streamlit-drawable-canvas>=0.9.3
 numpy
 Pillow
+lapx>=0.5.5
