@@ -139,8 +139,13 @@ def render_lane_config(config, selected_video):
             st.rerun()
             
         if c2.button("💾 Save to Config"):
-            # Scaling back to original resolution
-            scale_monitor = w / target_w
+            # Scaling: Map from Display (700px) -> Processing Resolution (e.g. 1280px)
+            # NOT Original Resolution, because main.py resizes the frame.
+            process_w = config['video'].get('resize_width', 1280)
+            process_h = config['video'].get('resize_height', 720)
+            
+            scale_x = process_w / target_w
+            scale_y = process_h / target_h
             
             if mode == "Lanes":
                 lanes_data = []
@@ -150,7 +155,10 @@ def render_lane_config(config, selected_video):
                         # Get 4 points, scale them
                         poly = []
                         for p in pts[i*4 : (i+1)*4]:
-                            poly.append([int(p[0] * scale_monitor), int(p[1] * scale_monitor)])
+                            # Scale x by scale_x, y by scale_y
+                            px = int(p[0] * scale_x)
+                            py = int(p[1] * scale_y)
+                            poly.append([px, py])
                         
                         lanes_data.append({
                             "id": i+1,
@@ -165,8 +173,8 @@ def render_lane_config(config, selected_video):
             elif mode == "Stop Line":
                 pts = st.session_state['stop_temp_points']
                 if len(pts) == 2:
-                    p1 = [int(pts[0][0] * scale_monitor), int(pts[0][1] * scale_monitor)]
-                    p2 = [int(pts[1][0] * scale_monitor), int(pts[1][1] * scale_monitor)]
+                    p1 = [int(pts[0][0] * scale_x), int(pts[0][1] * scale_y)]
+                    p2 = [int(pts[1][0] * scale_x), int(pts[1][1] * scale_y)]
                     config['analytics']['stop_line_coords'] = [p1, p2]
                     # Clean legacy
                     if 'stop_line_y' in config['analytics']:
@@ -177,5 +185,7 @@ def render_lane_config(config, selected_video):
 
             with open("config/config.yaml", "w") as f:
                 yaml.dump(config, f)
-            time.sleep(1)
+            
+            st.warning("⚠️ NOTE: You must RESTART the analysis (Click Stop -> Start) to apply these changes!")
+            time.sleep(2)
             st.rerun()
