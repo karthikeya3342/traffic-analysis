@@ -134,17 +134,22 @@ def render_analysis_control(selected_video, config):
                     st.session_state['process_handle'] = None # Clear handle
                     
                     exit_code = process.returncode
-                    status_placeholder.error(f"Process stopped unexpectedly with code {exit_code}")
                     
-                    # Read Full Log for Debugging
-                    error_log = "No log info."
-                    if os.path.exists(log_file):
-                        with open(log_file, "r") as f:
-                            lines = f.readlines()
-                            error_log = "".join(lines[-30:])
-                    
-                    st.error(f"### Crash Log (Code {exit_code})")
-                    st.code(error_log)
+                    if exit_code == 0:
+                        status_placeholder.success("Analysis Completed Successfully!")
+                        st.balloons()
+                    else:
+                        status_placeholder.error(f"Process stopped unexpectedly with code {exit_code}")
+                        
+                        # Read Full Log for Debugging
+                        error_log = "No log info."
+                        if os.path.exists(log_file):
+                            with open(log_file, "r") as f:
+                                lines = f.readlines()
+                                error_log = "".join(lines[-30:])
+                        
+                        st.error(f"### Crash Log (Code {exit_code})")
+                        st.code(error_log)
                     
                     # Do not rerun automatically, let user digest error
                     break
