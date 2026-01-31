@@ -160,7 +160,9 @@ def render_metrics(config):
 def render_video_output(video_path):
     st.subheader("Processed Video Output")
     if os.path.exists(video_path):
-        st.video(video_path)
+        # Bust cache using mtime as key
+        t = os.path.getmtime(video_path)
+        st.video(video_path, key=f"video_{t}")
     else:
         st.info("Waiting for processed video output...")
 
