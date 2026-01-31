@@ -330,6 +330,9 @@ def main():
             # Save stats to CSV for dashboard
             import pandas as pd
             # Flatten stats for CSV
+            # Save stats to CSV for dashboard
+            import pandas as pd
+            # Flatten stats for CSV
             flat_stats = []
             for s in all_stats:
                 row = {
@@ -340,6 +343,7 @@ def main():
                 # Add queue stats
                 for lane, data in s["queue_stats"].items():
                     row[f"{lane}_count"] = data["count"]
+                    row[f"{lane}_density"] = data.get("density_ratio", 0.0) # Capture Density
                     row[f"{lane}_status"] = data["status"]
                 flat_stats.append(row)
                 
