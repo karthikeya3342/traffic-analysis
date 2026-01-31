@@ -2,8 +2,8 @@
 
 A comprehensive computer vision solution for real-time traffic monitoring, queue analysis, and violation detection using YOLO and Streamlit.
 
-![Traffic Analysis Dashboard](https://github.com/user-attachments/assets/placeholder-image) 
-*(Note: Replace with actual screenshot)*
+<img width="1919" height="877" alt="image" src="https://github.com/user-attachments/assets/30f93ad7-5ebf-4221-94cf-8959b0aeca05" />
+
 
 ## ✨ Features
 
