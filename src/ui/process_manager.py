@@ -181,6 +181,8 @@ def render_analysis_control(selected_video, config):
                         if img is not None:
                             # Convert BGR to RGB for Streamlit
                             img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                            # Convert BGR to RGB for Streamlit
+                            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                             video_placeholder.image(img_rgb, channels="RGB", use_container_width=True, caption="Live Analysis Feed")
                     else:
                         status_placeholder.info("Waiting for first frame...")
