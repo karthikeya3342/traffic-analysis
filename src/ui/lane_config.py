@@ -54,6 +54,14 @@ def render_lane_config(config, selected_video):
                 st.session_state['force_lane_expand'] = True # Force open on refresh
                 st.rerun()
             
+            # DEBUG PATH
+            if selected_video:
+                import os
+                exists = os.path.exists(selected_video)
+                st.write(f"DEBUG: Video Path: '{selected_video}' | Exists: {exists}")
+                if exists:
+                    st.write(f"DEBUG: File Size: {os.path.getsize(selected_video)} bytes")
+            
             # Use cached frame getter
             frame_rgb = get_first_frame(selected_video)
 
