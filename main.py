@@ -67,15 +67,37 @@ def main():
         analytics = TrafficAnalytics(config)
         visualizer = Visualizer(config)
         
-        # Video Writer
-        # Use 'avc1' (H.264) for better browser compatibility in Streamlit
-        try:
-            fourcc = cv2.VideoWriter_fourcc(*'avc1')
-        except:
-            fourcc = cv2.VideoWriter_fourcc(*'mp4v') # Fallback
-            
-        out = cv2.VideoWriter(config['video']['output'], fourcc, config['video']['fps'], 
-                              (config['video']['resize_width'], config['video']['resize_height']))
+        # Video Writer Init
+        # Cloud environments often lack h264, so we need robust fallbacks
+        codecs_to_try = ['avc1', 'mp4v', 'isom']
+        out = None
+        
+        # Ensure output dir exists
+        output_dir = os.path.dirname(config['video']['output'])
+        if output_dir: os.makedirs(output_dir, exist_ok=True)
+        
+        for codec in codecs_to_try:
+            try:
+                fourcc = cv2.VideoWriter_fourcc(*codec)
+                temp_out = cv2.VideoWriter(
+                    config['video']['output'], 
+                    fourcc, 
+                    config['video']['fps'], 
+                    (config['video']['resize_width'], config['video']['resize_height'])
+                )
+                if temp_out.isOpened():
+                    logging.info(f"VideoWriter initialized successfully with codec: {codec}")
+                    out = temp_out
+                    break
+                else:
+                    logging.warning(f"Failed to open VideoWriter with codec: {codec}")
+            except Exception as e:
+                 logging.warning(f"Codec {codec} error: {e}")
+                 
+        if out is None or not out.isOpened():
+            logging.error("CRITICAL: DYNAMIC VIDEO WRITER FAILED TO OPEN. OUTPUT WILL BE MISSING.")
+            sys.stderr.write("\nCRITICAL: VideoWriter Initialization Failed! Check Codecs.\n")
+            raise RuntimeError("VideoWriter initialization failed")
         
         logging.info("Starting processing...")
         
