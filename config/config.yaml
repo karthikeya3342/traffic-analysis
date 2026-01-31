@@ -1,12 +1,34 @@
 analytics:
-  lanes: []
+  lanes:
+  - coords:
+    - - 252
+      - 351
+    - - 442
+      - 294
+    - - 747
+      - 575
+    - - 404
+      - 661
+    id: 1
+    name: Lane 1
+  - coords:
+    - - 605
+      - 252
+    - - 753
+      - 183
+    - - 1089
+      - 316
+    - - 906
+      - 445
+    id: 2
+    name: Lane 2
   queue_threshold_speed: 2
   speed_limit_pixels: 25
   stop_line_coords:
-  - - 347
-    - 612
-  - - 1268
-    - 628
+  - - 345
+    - 611
+  - - 1267
+    - 626
 detection:
   classes:
   - 2
@@ -14,7 +36,7 @@ detection:
   - 5
   - 7
   confidence_threshold: 0.3
-  model: yolo11n.pt
+  model: yolo11m.pt
 tracking:
   max_disappeared: 50
   max_distance: 150
