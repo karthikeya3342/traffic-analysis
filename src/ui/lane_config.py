@@ -88,12 +88,12 @@ def render_lane_config(config, selected_video):
                 bg_image = Image.fromarray(frame_rgb).convert("RGB")
                 bg_image = bg_image.resize((canvas_width, canvas_height), Image.Resampling.LANCZOS)
                 
-                # ✅ CLOUD FIX: Convert to Base64 String
-                # This bypasses both "Numpy Truthy" errors AND "Streamlit Image URL" black screens
+                # ✅ CLOUD FIX: Sanitize PIL Image
+                # Save to buffer and reload to remove any Numpy memory view artifacts
+                # preventing the "Black Screen" issue.
                 buffered = io.BytesIO()
-                bg_image.save(buffered, format="PNG")
-                img_str = base64.b64encode(buffered.getvalue()).decode()
-                bg_b64 = f"data:image/png;base64,{img_str}"
+                bg_image.save(buffered, format="JPEG")
+                bg_image = Image.open(buffered) # Reload clean image
                 
                 # Controls
                 col_controls, col_canvas = st.columns([1, 3])
@@ -213,7 +213,7 @@ def render_lane_config(config, selected_video):
                         fill_color="rgba(0, 255, 0, 0.3)",
                         stroke_width=2,
                         stroke_color="green",
-                        background_image=bg_b64,
+                        background_image=bg_image, # Use the sanitized PIL Image
                         background_color="#ffffff",
                         update_streamlit=True,
                         height=canvas_height,
