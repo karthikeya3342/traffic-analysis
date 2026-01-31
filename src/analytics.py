@@ -28,35 +28,82 @@ class TrafficAnalytics:
 
     def update_queues(self, tracks, bboxes):
         """
-        Estimate queue length using manual lane ROIs.
+        Estimate queue density using Area-Based Occupancy:
+        Density = Sum(Vehicle BBox Intersection with Lane) / Total Lane Area
         """
+        import cv2
+        
+        # Lazy Init of Lane Masks
+        if not hasattr(self, 'lane_masks'):
+            self.lane_masks = {}
+            h = self.config['video'].get('resize_height', 720)
+            w = self.config['video'].get('resize_width', 1280)
+            
+            for lane in self.lanes:
+                mask = np.zeros((h, w), dtype=np.uint8)
+                pts = np.array(lane['coords'], dtype=np.int32)
+                cv2.fillPoly(mask, [pts], 255)
+                # Calculate total lane area
+                area = np.count_nonzero(mask)
+                self.lane_masks[lane['name']] = {'mask': mask, 'area': area}
+
         queue_stats = {}
         
-        # Initialize
+        # Initialize Stats
         for lane in self.lanes:
             queue_stats[lane['name']] = {
                 "count": 0, 
-                "status": "Low",
+                "occupancy_pixels": 0,
+                "density_ratio": 0.0,
+                "status": "Free Flow",
                 "coords": lane['coords']
             }
             
-        for obj_id, centroid in tracks.items():
-            cx, cy = centroid
+        # Calculate Intersections
+        # Optimization: Only iterate lanes that exist
+        if not self.lane_masks: return queue_stats
+
+        for obj_id, bbox in bboxes.items():
+            x1, y1, x2, y2 = map(int, bbox)
             
-            # Find which lane this vehicle is in
-            for lane in self.lanes:
-                polygon = lane['coords']
-                # Check point in polygon
-                if point_in_polygon((cx, cy), polygon):
-                    queue_stats[lane['name']]["count"] += 1
-                    # Break ensures vehicle is only counted in one lane
-                    break
-        
-        # Update density status
+            # Clip to frame dimensions
+            h_frame, w_frame = self.lane_masks[self.lanes[0]['name']]['mask'].shape
+            x1, y1 = max(0, x1), max(0, y1)
+            x2, y2 = min(w_frame, x2), min(h_frame, y2)
+            
+            if x2 <= x1 or y2 <= y1: continue
+            
+            # Check intersection with each lane
+            for lane_name, lane_data in self.lane_masks.items():
+                mask = lane_data['mask']
+                
+                # Extract ROI from mask corresponding to vehicle bbox
+                # This ROI contains 255 where Lane exists, 0 otherwise.
+                # All pixels in this ROI are "Inside the Vehicle BBox" by definition.
+                # So counting non-zero in this ROI = Area(Lane Intersect Vehicle)
+                roi = mask[y1:y2, x1:x2]
+                intersection_area = np.count_nonzero(roi)
+                
+                if intersection_area > 0:
+                     queue_stats[lane_name]['occupancy_pixels'] += intersection_area
+                     
+                     # Count vehicle if it overlaps significantly (>5% of its own area or >100 pixels)
+                     # or just >0 for raw sensitivity. Let's use >0.
+                     queue_stats[lane_name]['count'] += 1
+
+        # Calculate Final Density
         for name, stats in queue_stats.items():
-            cnt = stats['count']
-            if cnt > 8: stats['status'] = "High"
-            elif cnt > 4: stats['status'] = "Medium"
+            total_lane_area = self.lane_masks[name]['area']
+            if total_lane_area > 0:
+                stats['density_ratio'] = stats['occupancy_pixels'] / total_lane_area
+            else:
+                stats['density_ratio'] = 0
+            
+            # Thresholds
+            dr = stats['density_ratio']
+            if dr > 0.40: stats['status'] = "Congested"
+            elif dr > 0.15: stats['status'] = "Moderate"
+            else: stats['status'] = "Free Flow"
             
         return queue_stats
 
