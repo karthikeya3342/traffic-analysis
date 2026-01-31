@@ -35,7 +35,8 @@ detection:
   - 3
   - 5
   - 7
-  model: yolo11m.pt
+  confidence_threshold: 0.3
+  model: yolo11n.pt
 tracking:
   max_disappeared: 50
   max_distance: 150

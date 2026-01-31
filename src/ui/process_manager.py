@@ -170,13 +170,6 @@ def render_analysis_control(selected_video, config):
                         st.error(f"### Crash Log (Code {exit_code})")
                         st.code(error_log)
                     
-                    # --- CLEANUP LIVE VIEW ---
-                    # Clear video player and dashboard to show final results clearly
-                    video_placeholder.empty()
-                    for ph in dashboard_placeholders.values():
-                        ph.empty()
-                    # -------------------------
-
                     # Do not rerun automatically, let user digest error
                     break
                 
