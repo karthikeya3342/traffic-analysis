@@ -57,11 +57,15 @@ def render_lane_config(config, selected_video):
         
         # Draw Existing Config
         if mode == "Preview Config":
+             process_w = config['video'].get('resize_width', 1280)
+             # Preview Ratio: Map Processed (1280) -> Display (700)
+             preview_ratio = target_w / process_w
+             
              # Draw Lanes from Config
              for lane in config['analytics'].get('lanes', []):
                  pts = np.array(lane['coords'], dtype=np.int32)
                  # Scale to display
-                 pts = (pts * ratio).astype(np.int32)
+                 pts = (pts * preview_ratio).astype(np.int32)
                  cv2.polylines(display_frame, [pts], True, (0, 255, 0), 2)
                  centroid = np.mean(pts, axis=0).astype(int)
                  cv2.putText(display_frame, str(lane.get('id', '?')), tuple(centroid), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
@@ -69,8 +73,8 @@ def render_lane_config(config, selected_video):
              # Draw Stop Line
              stop_pts = config['analytics'].get('stop_line_coords', [])
              if len(stop_pts) == 2:
-                 p1 = (int(stop_pts[0][0] * ratio), int(stop_pts[0][1] * ratio))
-                 p2 = (int(stop_pts[1][0] * ratio), int(stop_pts[1][1] * ratio))
+                 p1 = (int(stop_pts[0][0] * preview_ratio), int(stop_pts[0][1] * preview_ratio))
+                 p2 = (int(stop_pts[1][0] * preview_ratio), int(stop_pts[1][1] * preview_ratio))
                  cv2.line(display_frame, p1, p2, (255, 0, 0), 3)
 
         # Draw Temp Points (Interactive)
