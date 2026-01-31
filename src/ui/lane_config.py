@@ -66,14 +66,6 @@ def render_lane_config(config, selected_video):
             frame_rgb = get_first_frame(selected_video)
 
             if frame_rgb is not None:
-                st.write(f"DEBUG: Frame Loaded. Shape: {frame_rgb.shape}. Mean Pxl Value: {np.mean(frame_rgb):.2f}")
-                
-                # Ensure uint8
-                frame_rgb = frame_rgb.astype(np.uint8)
-                
-                # DEBUG VISUAL
-                st.image(frame_rgb, caption="Preview Frame (Debug)", use_column_width=True)
-
                 # Resize logic (needs original dims from frame_rgb)
                 h_orig, w_orig = frame_rgb.shape[:2]
                 
