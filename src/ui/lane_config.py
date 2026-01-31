@@ -4,6 +4,8 @@ import yaml
 import numpy as np
 import time
 from PIL import Image
+import base64
+import io
 
 # @st.cache_data removed for debugging
 def get_first_frame(video_path):
@@ -82,14 +84,6 @@ def render_lane_config(config, selected_video):
                 scale_factor = canvas_width / w
                 canvas_height = int(h * scale_factor)
                 
-import base64
-import io
-
-# ... (imports)
-
-def render_lane_config(config, selected_video):
-    # ... (existing setup)
-    
                 # Explicit conversion to ensure compatibility
                 bg_image = Image.fromarray(frame_rgb).convert("RGB")
                 bg_image = bg_image.resize((canvas_width, canvas_height), Image.Resampling.LANCZOS)
