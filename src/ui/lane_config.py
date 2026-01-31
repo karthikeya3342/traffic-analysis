@@ -82,13 +82,24 @@ def render_lane_config(config, selected_video):
                 scale_factor = canvas_width / w
                 canvas_height = int(h * scale_factor)
                 
+import base64
+import io
+
+# ... (imports)
+
+def render_lane_config(config, selected_video):
+    # ... (existing setup)
+    
                 # Explicit conversion to ensure compatibility
-                # Convert straight from original frame_rgb to avoid double resizing artifacts
                 bg_image = Image.fromarray(frame_rgb).convert("RGB")
                 bg_image = bg_image.resize((canvas_width, canvas_height), Image.Resampling.LANCZOS)
                 
-                # ✅ CLOUD FIX: Convert back to Numpy
-                bg_np = np.array(bg_image)
+                # ✅ CLOUD FIX: Convert to Base64 String
+                # This bypasses both "Numpy Truthy" errors AND "Streamlit Image URL" black screens
+                buffered = io.BytesIO()
+                bg_image.save(buffered, format="PNG")
+                img_str = base64.b64encode(buffered.getvalue()).decode()
+                bg_b64 = f"data:image/png;base64,{img_str}"
                 
                 # Controls
                 col_controls, col_canvas = st.columns([1, 3])
@@ -119,7 +130,7 @@ def render_lane_config(config, selected_video):
                     st.write("---")
                     st.write("**Reference View**")
                     st.caption("Use this if canvas is black.")
-                    st.image(bg_np, use_column_width=True)
+                    st.image(bg_image, use_column_width=True)
 
                 # Prepare initial drawing
                 initial_drawing = {"version": "4.4.0", "objects": []}
@@ -208,7 +219,7 @@ def render_lane_config(config, selected_video):
                         fill_color="rgba(0, 255, 0, 0.3)",
                         stroke_width=2,
                         stroke_color="green",
-                        background_image=bg_np,
+                        background_image=bg_b64,
                         background_color="#ffffff",
                         update_streamlit=True,
                         height=canvas_height,
