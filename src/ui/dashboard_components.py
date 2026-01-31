@@ -73,7 +73,7 @@ def render_metrics(config):
                  # Constrain width
                  sub_c, _ = st.columns([2, 3])
                  with sub_c:
-                     st.pyplot(fig1, width="stretch")
+                     st.pyplot(fig1, use_container_width=True)
                  plt.close(fig1)
              else:
                  st.info("No classification data.")
@@ -252,7 +252,7 @@ def update_live_dashboard(placeholders: dict, stats: dict):
                  # Render
                  c_p1, _ = st.columns([1, 2])
                  with c_p1:
-                     st.pyplot(fig_live, width="stretch")
+                     st.pyplot(fig_live, use_container_width=True)
                  plt.close(fig_live)
             else:
                  st.info("Waiting for classification data...")
