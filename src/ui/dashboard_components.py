@@ -160,13 +160,7 @@ def render_metrics(config):
 def render_video_output(video_path):
     st.subheader("Processed Video Output")
     if os.path.exists(video_path):
-        try:
-            # Bust cache using mtime as key
-            t = os.path.getmtime(video_path)
-            st.video(video_path, key=f"video_{t}")
-        except Exception as e:
-            st.warning(f"Video reload warning: {e}")
-            st.video(video_path) # Fallback without key
+        st.video(video_path)
     else:
         st.info("Waiting for processed video output...")
 
