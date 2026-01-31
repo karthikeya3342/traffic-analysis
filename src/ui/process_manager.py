@@ -130,9 +130,22 @@ def render_analysis_control(selected_video, config):
                 # Check health
                 if process.poll() is not None:
                     st.session_state['analyzing'] = False
-                    status_placeholder.error(f"Process stopped with code {process.returncode}")
                     st.session_state['process_handle'] = None # Clear handle
-                    st.rerun()
+                    
+                    exit_code = process.returncode
+                    status_placeholder.error(f"Process stopped unexpectedly with code {exit_code}")
+                    
+                    # Read Full Log for Debugging
+                    error_log = "No log info."
+                    if os.path.exists(log_file):
+                        with open(log_file, "r") as f:
+                            lines = f.readlines()
+                            error_log = "".join(lines[-30:])
+                    
+                    st.error(f"### Crash Log (Code {exit_code})")
+                    st.code(error_log)
+                    
+                    # Do not rerun automatically, let user digest error
                     break
                 
                 # 0. Live Video Preview (IPC)
