@@ -86,7 +86,7 @@ def render_metrics(config):
                   if not df_log.empty:
                       df_log = df_log[["time", "type", "vehicle_id"]]
                       df_log.columns = ["Time", "Type", "ID"]
-                      st.dataframe(df_log, height=250, width="stretch")
+                      st.dataframe(df_log, height=250, use_container_width=True)
              else:
                   st.info("No violations recorded.")
         
@@ -105,10 +105,10 @@ def render_metrics(config):
                     data=csv_data,
                     file_name="traffic_analysis_stats.csv",
                     mime="text/csv",
-                    width="stretch"
+                    use_container_width=True
                 )
             else:
-                st.button("Stats CSV Not Available", disabled=True, width="stretch")
+                st.button("Stats CSV Not Available", disabled=True, use_container_width=True)
 
         with ec2:
             if os.path.exists(SUMMARY_FILE):
@@ -119,10 +119,10 @@ def render_metrics(config):
                     data=json_data,
                     file_name="traffic_summary.json",
                     mime="application/json",
-                    width="stretch"
+                    use_container_width=True
                 )
             else:
-                 st.button("Summary JSON Not Available", disabled=True, width="stretch")
+                 st.button("Summary JSON Not Available", disabled=True, use_container_width=True)
 
     else:
         st.warning("No stats available yet. Run analysis from the sidebar.")

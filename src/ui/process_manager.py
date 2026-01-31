@@ -62,11 +62,11 @@ def render_analysis_control(selected_video, config):
         st.sidebar.markdown("### 🚦 Signal Control")
         col1, col2 = st.sidebar.columns(2)
         
-        if col1.button("🔴 RED", width="stretch"):
+        if col1.button("🔴 RED", use_container_width=True):
             with open("data/signal_state.txt", "w") as f:
                 f.write("RED")
                 
-        if col2.button("🟢 GREEN", width="stretch"):
+        if col2.button("🟢 GREEN", use_container_width=True):
             with open("data/signal_state.txt", "w") as f:
                 f.write("GREEN")
         
