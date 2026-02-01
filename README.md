@@ -5,6 +5,9 @@ A comprehensive computer vision solution for real-time traffic monitoring, queue
 🌐 **Live Demo (Deployed on Streamlit Cloud):**  
 👉 https://karthikeya3342-traffic-analysis-app-abfhnv.streamlit.app/
 
+📺 **Project Demo Video (YouTube):**  
+👉 https://youtu.be/JzggnaPxmZU?si=BDg4Giq7PfzCaNb1
+
 <img width="1919" height="877" alt="image" src="https://github.com/user-attachments/assets/30f93ad7-5ebf-4221-94cf-8959b0aeca05" />
 
 ---
